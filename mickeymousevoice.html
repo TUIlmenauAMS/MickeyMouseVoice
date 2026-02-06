@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Modulator</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        #controls { margin: 20px; }
+        #freq { width: 300px; }
+    </style>
+</head>
+<body>
+    <h1>Voice Modulator (Mickey Mouse Effect)</h1>
+    <p>This app modulates your microphone input with a sine wave in real-time to create a modulated voice effect. Use the slider to adjust the modulation frequency.</p>
+    
+    <div id="controls">
+        <button id="startBtn">Start</button>
+        <button id="stopBtn" disabled>Stop</button>
+        <br><br>
+        <label for="freq">Modulation Frequency (Hz): <span id="freqValue">500</span></label><br>
+        <input type="range" id="freq" min="100" max="2000" value="500" step="10">
+    </div>
+
+    <script>
+        let audioContext;
+        let mediaStream;
+        let sourceNode;
+        let modulatorGain;
+        let oscillator;
+
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const freqSlider = document.getElementById('freq');
+        const freqValue = document.getElementById('freqValue');
+
+        freqSlider.addEventListener('input', () => {
+            freqValue.textContent = freqSlider.value;
+            if (oscillator) {
+                oscillator.frequency.value = parseFloat(freqSlider.value);
+            }
+        });
+
+        startBtn.addEventListener('click', async () => {
+            try {
+                // Get microphone access
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                // Create AudioContext
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                // Create source from media stream
+                sourceNode = audioContext.createMediaStreamSource(mediaStream);
+
+                // Create GainNode for modulation
+                modulatorGain = audioContext.createGain();
+                modulatorGain.gain.value = 0; // Set base gain to 0 so effective gain is oscillator output
+
+                // Create Oscillator for carrier sine wave
+                oscillator = audioContext.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = parseFloat(freqSlider.value);
+
+                // Connect oscillator to the gain parameter of modulatorGain
+                oscillator.connect(modulatorGain.gain);
+
+                // Connect source to modulatorGain
+                sourceNode.connect(modulatorGain);
+
+                // Connect modulatorGain to destination (speakers)
+                modulatorGain.connect(audioContext.destination);
+
+                // Start oscillator
+                oscillator.start();
+
+                // Resume context if needed
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+
+                // Update buttons
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } catch (err) {
+                console.error('Error starting modulator:', err);
+                alert('Could not access microphone or setup audio context.');
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (oscillator) {
+                oscillator.stop();
+                oscillator.disconnect();
+            }
+            if (modulatorGain) {
+                modulatorGain.disconnect();
+            }
+            if (sourceNode) {
+                sourceNode.disconnect();
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+
+            // Reset buttons
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>
