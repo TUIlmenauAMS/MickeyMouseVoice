@@ -5,7 +5,7 @@ This Colab notebook can record your speech using your microphone, modulates it w
 
 https://colab.research.google.com/github/TUIlmenauAMS/MickeyMouseVoice/blob/main/speechmodulation.ipynb
 
-or, for the browser app, just click on this link to serve it in github.io:
+I made an html browser app out of the Python program, with the help of Grok.com. For the browser app, just click on this link to serve it in github.io:
 [mickeymousevoice.html](https://htmlpreview.github.io/?https://github.com/TUIlmenauAMS/MickeyMouseVoice/blob/main/mickeymousevoice.html)
 
 Gerald Schuller, May 2023
